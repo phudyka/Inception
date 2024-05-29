@@ -7,8 +7,10 @@ RUN apt update && \
 
 COPY conf/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
 
-COPY init-db.sh /docker-entrypoint-initdb.d/init-db.sh
+COPY /tools/init-db.sh /docker-entrypoint-initdb.d/init-db.sh
 
 RUN chmod +x /docker-entrypoint-initdb.d/init-db.sh
 
-CMD ["mysqld_safe"]
+RUN mkdir -p /var/run/mysqld && chown -R mysql:mysql /var/lib/mysql /var/run/mysqld
+
+CMD ["./docker-entrypoint-initdb.d/init-db.sh"]

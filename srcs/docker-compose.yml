@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-
   mariadb:
     container_name: mariadb
     networks:
@@ -12,7 +11,7 @@ services:
     env_file: .env
     volumes:
       - mariadb:/var/lib/mysql
-    restart: unless-stopped
+    restart: always
     expose:
       - "3306"
 
@@ -55,13 +54,13 @@ volumes:
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/Home/data/wordpress'
+      device: "${WORDPRESS_DIR}"
   mariadb:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/Home/data/mariadb'
+      device: "${MARIADB_DIR}"
 
 networks:
   inception:

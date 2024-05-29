@@ -1,30 +1,27 @@
 FROM debian:buster
 
-# Installer les paquets nécessaires
-RUN apt update && \
+RUN apt update -y && \
     apt upgrade -y && \
     apt install -y wget php7.3 php-fpm php-mysql mariadb-client && \
     apt clean
 
-# Télécharge et extraire WordPress
-RUN wget https://fr.wordpress.org/wordpress-6.5.3-fr_FR.tar.gz -P /var/www
-RUN cd /var/www && tar -xzf wordpress-6.5.3-fr_FR.tar.gz && rm wordpress-6.5.3-fr_FR.tar.gz
-RUN chown -R root:root /var/www/wordpress
+RUN wget https://fr.wordpress.org/wordpress-6.4.4-fr_FR.tar.gz -P /var/www && \
+    cd /var/www && \
+    tar -xzf wordpress-6.4.4-fr_FR.tar.gz && \
+    rm wordpress-6.4.4-fr_FR.tar.gz && \
+    chown -R www-data:www-data /var/www/wordpress
 
-# Télécharge et installer WP-CLI
-RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-RUN chmod +x wp-cli.phar
-RUN mv wp-cli.phar /usr/local/bin/wp
+COPY conf/www.conf /etc/php/7.3/fpm/pool.d
 
-# Copie la configuration PHP-FPM
-COPY conf/www.conf /etc/php/7.3/fpm/pool.d/www.conf
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp
 
-# Copie le script de configuration auto_config.sh
-COPY conf/auto_config.sh /usr/local/bin/auto_config.sh
+COPY tools/auto_config.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/auto_config.sh
 
-# Expose le port
+RUN mkdir -p /run/php
+
 EXPOSE 9000
 
-# Définit l'ENTRYPOINT pour exécuter le script de configuration
 ENTRYPOINT ["/usr/local/bin/auto_config.sh"]

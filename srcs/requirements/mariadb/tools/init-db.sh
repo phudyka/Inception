@@ -1,15 +1,30 @@
 #!/bin/bash
 
-service mysql start
+LOCKFILE="/var/lib/mysql/.lockfile_mysql"
 
-mysql -e "CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;"
+if [ -f "$LOCKFILE" ]; then
+	echo "MySQL already initialized"
 
-mysql -e "CREATE USER IF NOT EXISTS \`${SQL_USER}\`@'localhost' IDENTIFIED BY '${SQL_PASSWORD}';"
-mysql -e "GRANT ALL PRIVILEGES ON \`${SQL_DATABASE}\`.* TO \`${SQL_USER}\`@'%' IDENTIFIED BY '${SQL_PASSWORD}';"
+else
+	echo "Initialising MySQL"
 
-mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SQL_ROOT_PASSWORD}';"
+	service mysql start
 
-mysql -e "FLUSH PRIVILEGES;"
+	sleep 3
 
-mysqladmin -u root -p"$SQL_ROOT_PASSWORD" shutdown
-exec mysqld_safe
+	mysql -u root << EOF
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
+CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
+FLUSH PRIVILEGES;
+EOF
+	mysqladmin -u root -p"$MYSQL_ROOT_PASSWORD" shutdown
+	
+	touch "$LOCKFILE"
+
+	echo "MariaDB has been succesfully configured"
+
+fi
+
+exec mysqld --bind-address=0.0.0.0
